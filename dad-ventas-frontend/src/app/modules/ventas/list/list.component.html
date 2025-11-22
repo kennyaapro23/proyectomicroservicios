@@ -15,6 +15,33 @@
     </div>
 
     <!-- Listado de ventas/compras -->
+    <!-- Filtros -->
+    <div class="mb-4">
+        <div class="mb-2">
+            <label class="block text-sm text-gray-600 mb-1">Rango rápido</label>
+            <div class="flex gap-2">
+                <button (click)="applyPreset('week')" class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Última semana</button>
+                <button (click)="applyPreset('15')" class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Últimos 15 días</button>
+                <button (click)="applyPreset('30')" class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Últimos 30 días</button>
+                <button (click)="applyPreset('all')" class="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200">Todo</button>
+            </div>
+        </div>
+
+        <div class="flex gap-3 items-end">
+            <div>
+                <label class="block text-sm text-gray-600">Desde (fecha y hora)</label>
+                <input type="datetime-local" [(ngModel)]="dateFrom" class="border rounded px-2 py-1" />
+            </div>
+            <div>
+                <label class="block text-sm text-gray-600">Hasta (fecha y hora)</label>
+                <input type="datetime-local" [(ngModel)]="dateTo" class="border rounded px-2 py-1" />
+            </div>
+            <div>
+                <button (click)="filterVentas()" class="bg-blue-600 text-white px-3 py-1 rounded">Aplicar filtro</button>
+                <button (click)="resetFilters()" class="ml-2 bg-gray-200 px-3 py-1 rounded">Limpiar</button>
+            </div>
+        </div>
+    </div>
     <div *ngIf="ventas.length > 0; else sinDatos" class="space-y-6">
 
         <div *ngFor="let venta of ventas" class="border border-gray-300 rounded-lg shadow bg-white p-6 hover:shadow-lg transition">

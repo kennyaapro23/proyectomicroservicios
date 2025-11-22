@@ -23,4 +23,7 @@ public class TokenDto {
 
     @JsonProperty("clientId")
     private Integer clientId;
+
+    @JsonProperty("id")
+    private Integer id;
 }

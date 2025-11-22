@@ -21,4 +21,7 @@ public class TokenDto {
 
     @JsonProperty("clientId")
     private Integer clientId;
+
+    @JsonProperty("id")
+    private Integer id; // Cambiado de Long a Integer para coincidir con AuthUser.id
 }

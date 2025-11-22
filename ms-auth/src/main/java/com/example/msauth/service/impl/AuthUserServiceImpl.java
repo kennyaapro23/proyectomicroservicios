@@ -102,7 +102,8 @@ public class AuthUserServiceImpl implements AuthUserService {
                     jwtProvider.createToken(user),
                     user.getUserName(),
                     user.getRole().name(),
-                    user.getClientId()
+                    user.getClientId(),
+                    user.getId() // <-- se añade el id del usuario aquí
             );
         }
 
@@ -132,7 +133,8 @@ public class AuthUserServiceImpl implements AuthUserService {
                 token,
                 user.getUserName(),
                 user.getRole().name(),
-                user.getClientId()
+                user.getClientId(),
+                user.getId() // <-- se añade el id del usuario aquí
         );
     }
 }

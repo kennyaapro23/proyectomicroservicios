@@ -40,8 +40,8 @@ export class FormComponent implements OnInit {
 
   initForm(): void {
     this.clienteForm = this.fb.group({
-      nombre: ['', Validators.required],
-      documento: ['', Validators.required],
+      name: ['', Validators.required],
+      document: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       telefono: ['']
     });

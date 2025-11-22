@@ -18,9 +18,7 @@
                     <p class="text-sm text-gray-500 font-medium">N° Pedido</p>
                     <p class="text-xl text-purple-700 font-bold">#{{ pedido.id || 'Sin ID' }}</p>
                 </div>
-                <div class="text-sm text-gray-500">
-                    📅 {{ pedido.date ? (pedido.date | date:'medium') : 'Sin fecha' }}
-                </div>
+                <!-- Fecha excluida: el backend no la persiste -->
                 <div class="mb-2 flex items-center gap-2">
                     <span class="text-sm font-semibold">Estado:</span>
                     <span [ngClass]="{
@@ -76,7 +74,8 @@
             <!-- Acciones -->
             <div class="mt-6 text-center flex justify-center gap-4 flex-wrap">
 
-                <button *ngIf="esAdmin" class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded shadow-md transition duration-300"
+                <button *ngIf="pedido.status !== 'PAGADO'"
+                        class="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold py-2 px-6 rounded shadow-md transition duration-300"
                         (click)="abrirModalPago(pedido.id)">
                     🧾 Generar Venta
                 </button>
@@ -154,12 +153,11 @@
 
             <!-- Botón Confirmar -->
             <div *ngIf="metodoSeleccionado" class="mt-4 text-center">
-                <button *ngIf="esAdmin" (click)="confirmarMetodoPago()"
+                <button (click)="confirmarMetodoPago()"
                         [disabled]="metodoSeleccionado === 'TARJETA' && !datosTarjetaValidos()"
                         class="w-full bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-semibold py-2 rounded shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
                     ✅ Procesar Venta
                 </button>
-                <div *ngIf="!esAdmin" class="text-sm text-gray-500 italic">Solo administradores pueden procesar ventas.</div>
             </div>
 
         </div>

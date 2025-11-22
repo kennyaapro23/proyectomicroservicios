@@ -45,7 +45,8 @@ export class ListComponent implements OnInit {
 
     this.productService.getProducts().subscribe({
       next: (data) => {
-        this.products = data;
+        // Orden descendente por id
+        this.products = (data || []).slice().sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.onSearchChange();
         this.isLoading = false;
       },

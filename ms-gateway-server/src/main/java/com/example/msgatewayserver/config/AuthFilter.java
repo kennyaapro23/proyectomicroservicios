@@ -49,6 +49,9 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                 return chain.filter(exchange);
             }
 
+            // Log: mostrar headers que llegaron al gateway
+            System.out.println("AuthFilter: Incoming raw headers: " + exchange.getRequest().getHeaders());
+
             // Validación del token
             if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 System.out.println("AuthFilter: No Authorization header present");
@@ -73,17 +76,45 @@ public class AuthFilter extends AbstractGatewayFilterFactory<AuthFilter.Config> 
                     .retrieve()
                     .bodyToMono(TokenDto.class)
                     .flatMap(t -> {
-                        System.out.println("🟢 Inyectando headers:");
+                        System.out.println("🟢 Inyectando headers desde token:");
                         System.out.println("x-username: " + t.getUserName());
                         System.out.println("x-role: " + t.getRole());
-                        System.out.println("x-client-id: " + t.getClientId());
+                        System.out.println("token clientId: " + t.getClientId());
+                        System.out.println("token id claim: " + t.getId());
+
+                        // --- RESOLVER CLIENT ID EN UNA VARIABLE FINAL (NO REASIGNAR) ---
+                        final Integer resolvedClientId;
+                        if (t.getClientId() != null) {
+                            resolvedClientId = t.getClientId();
+                        } else if ("CLIENTE".equalsIgnoreCase(t.getRole()) && t.getId() != null) {
+                            resolvedClientId = t.getId();
+                            System.out.println("AuthFilter: usando claim 'id' como x-client-id para token de CLIENTE: " + resolvedClientId);
+                        } else {
+                            resolvedClientId = null;
+                        }
+                        // --------------------------------------------------------------
 
                         ServerWebExchange mutatedExchange = exchange.mutate()
                                 .request(builder -> builder
                                         .headers(httpHeaders -> {
-                                            httpHeaders.add("x-username", t.getUserName());
-                                            httpHeaders.add("x-role", t.getRole());
-                                            httpHeaders.add("x-client-id", String.valueOf(t.getClientId()));
+                                            if (t.getUserName() != null) {
+                                                httpHeaders.add("x-username", t.getUserName());
+                                            }
+                                            if (t.getRole() != null) {
+                                                httpHeaders.add("x-role", t.getRole());
+                                            }
+
+                                            // No sobrescribimos si ya viene
+                                            if (!exchange.getRequest().getHeaders().containsKey("x-client-id")) {
+                                                if (resolvedClientId != null) {
+                                                    httpHeaders.add("x-client-id", String.valueOf(resolvedClientId));
+                                                    System.out.println("AuthFilter: inyectado x-client-id = " + resolvedClientId);
+                                                } else {
+                                                    System.out.println("AuthFilter: token no contiene clientId ni id aplicable; no añadimos x-client-id.");
+                                                }
+                                            } else {
+                                                System.out.println("AuthFilter: client-id already present in request, not overwriting.");
+                                            }
                                         })
                                 )
                                 .build();

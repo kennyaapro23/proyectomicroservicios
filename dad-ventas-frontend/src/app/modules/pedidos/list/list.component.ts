@@ -50,10 +50,17 @@ export class ListComponent implements OnInit {
       next: (data: OrderResponse[]) => {
         console.log('✅ Respuesta pedidos:', data); // Verifica en consola si viene bien el clientDto
 
+        // Ordenar pedidos de forma descendente (último pedido primero)
+        const ordered = data.slice().sort((a, b) => {
+          const aid = a.id ?? 0;
+          const bid = b.id ?? 0;
+          return bid - aid; // descendente
+        });
+
         // Mantener clientDto tal como viene; si viene null lo dejaremos así y
         // rellenaremos en una segunda pasada consultando /Client/{id} cuando
         // exista clientId pero falte clientDto.
-        this.pedidos = data.map(pedido => ({
+        this.pedidos = ordered.map(pedido => ({
           ...pedido,
           clientDto: pedido.clientDto ?? null
         }));
@@ -97,6 +104,12 @@ export class ListComponent implements OnInit {
 
 
   abrirModalPago(pedidoId: number): void {
+    const pedido = this.pedidos.find(p => p.id === pedidoId);
+    if (pedido && pedido.status === 'PAGADO') {
+      alert('Este pedido ya está pagado y no puede procesarse de nuevo.');
+      return;
+    }
+
     this.mostrarModalPago = true;
     this.pedidoSeleccionado = pedidoId;
     this.metodoSeleccionado = null;

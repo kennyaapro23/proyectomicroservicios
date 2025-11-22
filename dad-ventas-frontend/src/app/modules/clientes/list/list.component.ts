@@ -34,7 +34,8 @@ export class ListComponent implements OnInit {
 
     this.clienteService.getClientes().subscribe({
       next: (data) => {
-        this.clients = data;
+        // Orden descendente por id (último primero)
+        this.clients = (data || []).slice().sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.totalPages = Math.ceil(this.clients.length / this.itemsPerPage);
         this.updatePaginatedClients();
         this.isLoading = false;

@@ -4,9 +4,98 @@
 
 
 
-
 html,
 body {
   height: 100%;
   margin: 0;
 }
+
+/* Global color palette (Mercado Libre–inspired) */
+:root {
+  --ml-primary: #3483f8; /* blue */
+  --ml-primary-dark: #1752c6;
+  --ml-accent: #ffe600; /* yellow */
+  --ml-on-primary: #ffffff;
+  --ml-surface: #ffffff;
+  --ml-background: #f6f8fb;
+  --ml-text: #1f2937;
+  --ml-muted: #6b7280;
+  --ml-border: #e6e8eb;
+}
+
+/* Base page colors */
+body {
+  background-color: var(--ml-background);
+  color: var(--ml-text);
+}
+
+/* Links */
+a {
+  color: var(--ml-primary);
+}
+
+/* Utility classes */
+.bg-ml-primary { background-color: var(--ml-primary) !important; color: var(--ml-on-primary) !important; }
+.text-ml-primary { color: var(--ml-primary) !important; }
+.bg-ml-accent { background-color: var(--ml-accent) !important; color: #000 !important; }
+.border-ml { border-color: var(--ml-border) !important; }
+
+/* Material overrides: toolbar, buttons, chips, and inputs */
+.mat-toolbar.mat-primary,
+.mat-toolbar.mat-toolbar {
+  background-color: var(--ml-primary) !important;
+  color: var(--ml-on-primary) !important;
+}
+
+.mat-button.mat-primary,
+.mat-raised-button.mat-primary,
+.mat-flat-button.mat-primary {
+  background-color: var(--ml-primary) !important;
+  color: var(--ml-on-primary) !important;
+}
+
+.mat-button.mat-accent,
+.mat-raised-button.mat-accent,
+.mat-flat-button.mat-accent {
+  background-color: var(--ml-accent) !important;
+  color: #000 !important;
+}
+
+.mat-chip.mat-primary {
+  background-color: var(--ml-primary) !important;
+  color: var(--ml-on-primary) !important;
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  color: var(--ml-border);
+  border-color: var(--ml-border) !important;
+}
+
+/* Buttons that don't use Material classes */
+.btn-primary,
+.btn-ml {
+  background-color: var(--ml-primary) !important;
+  color: var(--ml-on-primary) !important;
+  border-color: transparent !important;
+}
+
+/* Cards and surfaces */
+.card, .mat-card {
+  background: var(--ml-surface);
+  border: 1px solid var(--ml-border);
+}
+
+/* Muted text */
+.text-muted { color: var(--ml-muted) !important; }
+
+/* Ensure form controls and small accents use primary color for focus/border */
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid rgba(52,131,248,0.12);
+  border-color: var(--ml-primary) !important;
+}
+
+/* Footer or small header accents */
+.accent-ml {
+  background: linear-gradient(90deg, var(--ml-accent), var(--ml-primary));
+}
+

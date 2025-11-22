@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
-import { switchMap } from 'rxjs/operators';
+import { switchMap, map } from 'rxjs/operators';
 import { OrderService } from './pedido.service';
 import { Sale } from "../models/sale.model";
 import { resources } from "../resources/resources";
@@ -57,6 +57,21 @@ export class SaleService {
             headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
         }
 
+        // Helper to post and normalize response (handle empty body)
+        const postAndNormalize = (body: any, resolvedClientId: number | null) => {
+            const finalHeaders = headers ? headers.set('x-client-id', String(resolvedClientId)) : new HttpHeaders({ 'x-client-id': String(resolvedClientId) });
+            if (body) {
+                const h = finalHeaders.set('Content-Type', 'application/json');
+                // send and normalize
+                return this.http.post(url, body, { headers: h, observe: 'response' }).pipe(
+                    map((resp: any) => resp.body && Object.keys(resp.body).length ? resp.body : { id: -1, orderId, paymentMethod: metodo, totalAmount: 0 })
+                );
+            }
+            return this.http.post(url, null, { headers: finalHeaders, observe: 'response' }).pipe(
+                map((resp: any) => resp.body && Object.keys(resp.body).length ? resp.body : { id: -1, orderId, paymentMethod: metodo, totalAmount: 0 })
+            );
+        };
+
         // Si ya tenemos clientId (token o selección) procesamos directamente.
         if (clientId != null && clientId > 0) {
             // Para TARJETA enviamos CardDto; para otros métodos no enviamos body.
@@ -65,14 +80,11 @@ export class SaleService {
                     return throwError(() => new Error('Datos de tarjeta incompletos para método TARJETA'));
                 }
                 const cardDto = { numero: tarjetaData.numero, cvv: tarjetaData.cvv, fecha: tarjetaData.fecha };
-                headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
-                headers = headers.set('Content-Type', 'application/json');
-                console.log('SaleService.processSale -> sending POST', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: cardDto });
-                return this.http.post(url, cardDto, { headers });
+                console.log('SaleService.processSale -> sending POST TARJETA', { url, headers: headers?.keys ? headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}) : {}, body: cardDto });
+                return postAndNormalize(cardDto, clientId);
             } else {
-                headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
-                console.log('SaleService.processSale -> sending POST (no body)', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: null });
-                return this.http.post(url, null, { headers });
+                console.log('SaleService.processSale -> sending POST (no body)', { url, headers: headers?.keys ? headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}) : {}, body: null });
+                return postAndNormalize(null, clientId);
             }
         }
 

@@ -31,7 +31,8 @@ export class ListComponent implements OnInit {
     this.errorMessage = null;
     this.categoryService.getCategories().subscribe({
       next: (data) => {
-        this.categories = data;
+        // Orden descendente por id
+        this.categories = (data || []).slice().sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
         this.isLoading = false;
       },
       error: (err) => {
