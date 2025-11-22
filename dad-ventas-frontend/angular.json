@@ -108,7 +108,8 @@
               "buildTarget": "dad-ventas-frontend:build:production"
             },
             "development": {
-              "buildTarget": "dad-ventas-frontend:build:development"
+              "buildTarget": "dad-ventas-frontend:build:development",
+              "hmr": false
             }
           },
           "defaultConfiguration": "development"

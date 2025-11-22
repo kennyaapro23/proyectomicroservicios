@@ -6,12 +6,13 @@ import {CategoryService} from "../../../core/services/category.service";
 import {CommonModule} from "@angular/common";
 
 @Component({
+  standalone: true,
   selector: 'app-list',
   imports: [
     RouterLink, CommonModule, RouterModule
   ],
   templateUrl: './list.component.html',
-  styleUrl: './list.component.scss'
+  styleUrls: ['./list.component.scss']
 })
 export class ListComponent implements OnInit {
 

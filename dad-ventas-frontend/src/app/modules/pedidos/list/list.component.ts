@@ -50,16 +50,35 @@ export class ListComponent implements OnInit {
       next: (data: OrderResponse[]) => {
         console.log('✅ Respuesta pedidos:', data); // Verifica en consola si viene bien el clientDto
 
-        // Solo agrega "Cliente desconocido" si realmente falta clientDto
+        // Mantener clientDto tal como viene; si viene null lo dejaremos así y
+        // rellenaremos en una segunda pasada consultando /Client/{id} cuando
+        // exista clientId pero falte clientDto.
         this.pedidos = data.map(pedido => ({
           ...pedido,
-          clientDto: pedido.clientDto ?? {
-            id: 0,
-            name: 'Cliente desconocido',
-            email: '',
-            document: ''
-          }
+          clientDto: pedido.clientDto ?? null
         }));
+
+        // Para cada pedido sin clientDto pero con clientId, pedir el cliente
+        this.pedidos.forEach((pedido, index) => {
+          if ((!pedido.clientDto || !pedido.clientDto.name) && pedido.clientId) {
+            this.pedidoService.getClientById(pedido.clientId).subscribe({
+              next: (client) => {
+                // Asegurarnos de que el pedido sigue existiendo en la lista
+                if (this.pedidos[index]) {
+                  this.pedidos[index].clientDto = {
+                    id: client.id ?? pedido.clientId,
+                    name: client.name ?? 'Cliente',
+                    email: client.email ?? '',
+                    document: client.document ?? ''
+                  };
+                }
+              },
+              error: (err: any) => {
+                console.warn('No se pudo obtener clientDto para pedido', pedido.id, err);
+              }
+            });
+          }
+        });
 
         if (data.length === 0) {
           this.errorMessage = this.esAdmin
@@ -110,7 +129,7 @@ export class ListComponent implements OnInit {
         this.mostrarModal = true;        // Abre modal de comprobante
         alert('✅ Venta procesada correctamente.');
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('❌ Error al procesar venta:', err);
         alert('❌ No se pudo procesar la venta.');
       }
@@ -164,7 +183,7 @@ export class ListComponent implements OnInit {
         alert('✅ Pedido eliminado con éxito.');
         this.cargarPedidos();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('❌ Error al eliminar pedido:', err);
         alert('❌ No se pudo eliminar el pedido.');
       }

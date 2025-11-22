@@ -141,10 +141,10 @@
                 <span>Total:</span>
                 <span>${{ cartTotal.toFixed(2) }}</span>
             </div>
-            <div *ngIf="isAdminVisible" class="cliente-select mb-3">
+            <div *ngIf="isAdmin()" class="cliente-select mb-3">
 
             <label for="cliente">Seleccionar Cliente:</label>
-                <select id="cliente" [(ngModel)]="selectedClientId" class="form-select">
+                <select id="cliente" [(ngModel)]="selectedClientId" (ngModelChange)="onSelectedClientChange($event)" class="form-select">
                     <option [ngValue]="null">-- Seleccionar --</option>
                     <option *ngFor="let cliente of clientes" [value]="cliente.id">
                         {{ cliente.name }} - {{ cliente.document }}

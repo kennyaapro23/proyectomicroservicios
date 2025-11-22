@@ -44,8 +44,22 @@ export class AuthService {
       const decoded: any = jwtDecode(token);
       localStorage.setItem('user_name', decoded.sub || '');
       localStorage.setItem('user_role', decoded.role || '');
-      if (decoded.clientId) {
-        localStorage.setItem('client_id', decoded.clientId.toString());
+
+      // Prefer explicit clientId claim. Si no existe, como fallback usamos
+      // el claim `id` solo cuando el role es CLIENTE — esto permite que
+      // clientes reciban su id en `client_id` incluso si el backend no incluyó clientId.
+      const clientIdFromToken = decoded.clientId ?? null;
+      const fallbackId = (decoded.id && decoded.role === 'CLIENTE') ? decoded.id : null;
+      const clientIdToStore = clientIdFromToken ?? fallbackId;
+
+      if (clientIdToStore != null) {
+        localStorage.setItem('client_id', clientIdToStore.toString());
+        if (!clientIdFromToken && fallbackId) {
+          console.warn('AuthService: clientId no encontrado en token — usando fallback id claim');
+        }
+      } else {
+        // Asegurar que no quede un valor obsoleto
+        localStorage.removeItem('client_id');
       }
     } catch (err) {
       console.error('Error al decodificar el token JWT:', err);

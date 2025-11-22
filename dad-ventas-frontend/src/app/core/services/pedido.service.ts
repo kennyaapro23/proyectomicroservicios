@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {OrderRequest, OrderResponse} from '../models/order.model';
+import { OrderRequest, OrderResponse } from '../models/order.model';
 import { resources } from '../resources/resources';
 
 @Injectable({
@@ -9,7 +9,7 @@ import { resources } from '../resources/resources';
 })
 export class OrderService {
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) { }
 
     // 🔹 POST /Order
     createOrder(order: OrderRequest): Observable<any> {
@@ -24,6 +24,11 @@ export class OrderService {
         return this.http.get<OrderResponse[]>(resources.pedidos.misPedidos);
     }
 
+    // Obtener cliente por ID (GET /Client/{id})
+    getClientById(id: number): Observable<any> {
+        return this.http.get<any>(resources.clientes.detalle(id));
+    }
+  
     getOrderById(id: number): Observable<OrderRequest> {
         return this.http.get<OrderRequest>(resources.pedidos.detalle(id));
     }
@@ -42,3 +47,4 @@ export class OrderService {
         return this.http.get<any[]>(resources.clientes.listar);
     }
 }
+

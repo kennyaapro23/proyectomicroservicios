@@ -12,4 +12,6 @@ public class WebClientConfig {
     public WebClient.Builder builder() {
         return WebClient.builder();
     }
+
+
 }

@@ -20,6 +20,11 @@ spring:
               - Authorization
               - Content-Type
               - Accept
+              - x-client-id
+              - X-Client-Id
+            exposedHeaders:
+              - x-client-id
+              - X-Client-Id
             allowedMethods:
               - GET
               - POST

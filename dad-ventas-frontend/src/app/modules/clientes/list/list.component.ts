@@ -9,7 +9,7 @@ import { RouterModule } from '@angular/router';
   selector: 'app-list',
   imports: [CommonModule, RouterModule],
   templateUrl: './list.component.html',
-  styleUrl: './list.component.scss'
+  styleUrls: ['./list.component.scss']
 })
 export class ListComponent implements OnInit {
   clients: Cliente[] = [];

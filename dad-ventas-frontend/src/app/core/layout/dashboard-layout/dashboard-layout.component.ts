@@ -8,6 +8,7 @@ import { OrderService } from '../../services/pedido.service';
 import { OrderRequest } from '../../models/order.model';
 import { AuthService } from '../../services/auth.service';
 import { CategoryService } from "../../services/category.service";
+import { SelectedClientService } from '../../services/selected-client.service';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -37,7 +38,8 @@ export class DashboardLayoutComponent implements OnInit {
       private router: Router,
       public cartService: CartService,
       private orderService: OrderService,
-      private categoryService: CategoryService
+      private categoryService: CategoryService,
+      private selectedClientService: SelectedClientService
   ) {}
 
   ngOnInit(): void {
@@ -78,6 +80,11 @@ export class DashboardLayoutComponent implements OnInit {
         console.error('❌ Error al cargar clientes:', err);
       }
     });
+  }
+
+  onSelectedClientChange(newVal: number | null): void {
+    this.selectedClientId = newVal;
+    this.selectedClientService.setSelectedClientId(newVal);
   }
 
   loadCategorias(): void {

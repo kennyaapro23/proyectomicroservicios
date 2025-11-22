@@ -1,9 +1,12 @@
 import { Injectable } from "@angular/core";
 import { HttpClient, HttpHeaders } from "@angular/common/http";
-import { Observable } from "rxjs";
+import { Observable, throwError } from "rxjs";
+import { switchMap } from 'rxjs/operators';
+import { OrderService } from './pedido.service';
 import { Sale } from "../models/sale.model";
 import { resources } from "../resources/resources";
 import {AuthService} from "./auth.service";
+import { SelectedClientService } from './selected-client.service';
 
 
 @Injectable({
@@ -11,7 +14,8 @@ import {AuthService} from "./auth.service";
 })
 export class SaleService {
 
-    constructor(private http: HttpClient, private authService: AuthService ) {
+    constructor(private http: HttpClient, private authService: AuthService, private selectedClientService: SelectedClientService,
+                private pedidoService: OrderService) {
 
     }
 
@@ -20,13 +24,15 @@ export class SaleService {
         return this.http.get<Sale[]>(resources.ventas.listar);
     }
 
-    // Compras del Cliente (con token se inyecta x-client-id desde el gateway)
+    // Compras del Cliente (requiere header x-client-id)
     getMyPurchases(): Observable<Sale[]> {
         const token = this.authService.getToken();
+        const clientId = this.authService.getClientId();
 
-        const headers = new HttpHeaders({
-            'Authorization': `Bearer ${token}`
-        });
+        let headers = token ? new HttpHeaders({ 'Authorization': `Bearer ${token}` }) : undefined;
+        if (clientId != null && clientId > 0) {
+            headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
+        }
 
         return this.http.get<Sale[]>(resources.ventas.misCompras, { headers });
     }
@@ -38,17 +44,61 @@ export class SaleService {
     processSale(orderId: number, metodo: string, tarjetaData?: any): Observable<any> {
         const url = resources.ventas.procesar(orderId, metodo);
 
-        // Se prepara el cuerpo para el pago con tarjeta si es necesario
-        let body = {};
-        if (metodo === 'TARJETA' && tarjetaData) {
-            body = {
-                numero: tarjetaData.numero,
-                fecha: tarjetaData.fecha,
-                cvv: tarjetaData.cvv
-            };
+        // Incluir token en headers por si el interceptor no lo añade
+        const token = this.authService.getToken();
+        let headers: HttpHeaders | undefined = token ? new HttpHeaders({ Authorization: `Bearer ${token}` }) : undefined;
+
+        // Obtener clientId (token o selección admin)
+        const clientIdFromToken = this.authService.getClientId();
+        const clientIdFromSelection = this.selectedClientService.getSelectedClientId();
+        const clientId = clientIdFromToken ?? clientIdFromSelection;
+
+        if (clientId != null) {
+            headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
         }
 
-        // Realizar la solicitud POST
-        return this.http.post(url, body);
+        // Si ya tenemos clientId (token o selección) procesamos directamente.
+        if (clientId != null && clientId > 0) {
+            // Para TARJETA enviamos CardDto; para otros métodos no enviamos body.
+            if (metodo === 'TARJETA') {
+                if (!tarjetaData || !tarjetaData.numero || !tarjetaData.cvv || !tarjetaData.fecha) {
+                    return throwError(() => new Error('Datos de tarjeta incompletos para método TARJETA'));
+                }
+                const cardDto = { numero: tarjetaData.numero, cvv: tarjetaData.cvv, fecha: tarjetaData.fecha };
+                headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
+                headers = headers.set('Content-Type', 'application/json');
+                console.log('SaleService.processSale -> sending POST', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: cardDto });
+                return this.http.post(url, cardDto, { headers });
+            } else {
+                headers = headers ? headers.set('x-client-id', String(clientId)) : new HttpHeaders({ 'x-client-id': String(clientId) });
+                console.log('SaleService.processSale -> sending POST (no body)', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: null });
+                return this.http.post(url, null, { headers });
+            }
+        }
+
+        // Si no teníamos clientId, intentar obtenerlo del pedido y luego procesar
+        return this.pedidoService.getOrderById(orderId).pipe(
+            switchMap((orderAny: any) => {
+                const orderClientId = orderAny?.clientId;
+                if (!orderClientId || orderClientId <= 0) {
+                    return throwError(() => new Error('No se encontró clientId en token, selección ni en el pedido'));
+                }
+
+                headers = headers ? headers.set('x-client-id', String(orderClientId)) : new HttpHeaders({ 'x-client-id': String(orderClientId) });
+
+                if (metodo === 'TARJETA') {
+                    if (!tarjetaData || !tarjetaData.numero || !tarjetaData.cvv || !tarjetaData.fecha) {
+                        return throwError(() => new Error('Datos de tarjeta incompletos para método TARJETA'));
+                    }
+                    const cardDto = { numero: tarjetaData.numero, cvv: tarjetaData.cvv, fecha: tarjetaData.fecha };
+                    headers = headers.set('Content-Type', 'application/json');
+                    console.log('SaleService.processSale -> sending POST (from order) TARJETA', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: cardDto });
+                    return this.http.post(url, cardDto, { headers });
+                } else {
+                    console.log('SaleService.processSale -> sending POST (from order) no body', { url, headers: headers.keys().reduce((acc, k) => ({ ...acc, [k]: headers?.get(k) }), {}), body: null });
+                    return this.http.post(url, null, { headers });
+                }
+            })
+        );
     }
 }
